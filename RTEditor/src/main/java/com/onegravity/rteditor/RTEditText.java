@@ -27,6 +27,7 @@ import android.text.Spanned;
 import android.text.TextWatcher;
 import android.text.style.ParagraphStyle;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -54,12 +55,15 @@ import com.onegravity.rteditor.utils.Selection;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
  * The actual rich text editor (extending android.widget.EditText).
  */
 public class RTEditText extends androidx.appcompat.widget.AppCompatEditText implements TextWatcher, SpanWatcher, LinkSpanListener {
+
+    private final static String TAG = "RTEditText";
 
     // don't allow any formatting in text mode
     private boolean mUseRTFormatting = true;
@@ -111,6 +115,9 @@ public class RTEditText extends androidx.appcompat.widget.AppCompatEditText impl
     private String mOldText;            // old text before it changed
     private String mNewText;            // new text after it changed (needed in afterTextChanged to see if the text has changed)
     private Spannable mOldSpannable;    // undo/redo
+
+    private int startChangedPos;               // onTextChanged start position
+    private int endChangedPos;                 // onTextChanged end position
 
     // we need to keep track of the media for this editor to be able to clean up after we're done
     private Set<RTMedia> mOriginalMedia = new HashSet<RTMedia>();
@@ -430,23 +437,78 @@ public class RTEditText extends androidx.appcompat.widget.AppCompatEditText impl
     /* TextWatcher */
     public synchronized void onTextChanged(CharSequence s, int start, int before, int count) {
         mLayoutChanged = true;
+        startChangedPos = start;
+        endChangedPos = start + count;
     }
 
     @Override
     /* TextWatcher */
     public synchronized void afterTextChanged(Editable s) {
-        if (mIsBulletSpanSelected || mIsNumberSpanSelected) {
-            boolean mBackSpace = mPreviousTextLength >= s.length();
-            if (!mBackSpace && s.toString().endsWith("\n")) {
-                // append zero width character
-                this.append("\u200B");
-            }
-        }
+        Log.d("RTEditText", "afterTextChanged: text: \"" + s + "\" count: " + s.length());
+//        if (mIsBulletSpanSelected || mIsNumberSpanSelected) {
+//            boolean mBackSpace = mPreviousTextLength >= s.length();
+//            if (!mBackSpace && s.toString().endsWith("\n")) {
+//                // append zero width character
+//                this.append("\u200B");
+//            }
+//        }
+
+//        RTEditText editor = this;
+//        if (editor.isBulletSpanSelected() || editor.isNumberSpanSelected()) {
+//            Editable editable = editor.getText();
+//            Objects.requireNonNull(editable);
+//            int length = editable.length();
+//            if (length > 0) {
+//                int lastIndex = length - 1;
+//                boolean isInput = endChangedPos > startChangedPos;
+//                boolean isNewLine = editable.charAt(lastIndex) == '\n';
+//                if (isInput && isNewLine) {
+//                    boolean continueInputZeroWidthSpace = true;
+//                    if (length >= 2) {
+//                        boolean isEmptyPrevious = editable.charAt(lastIndex - 1) == '\u200B';
+//                        if (isEmptyPrevious) {
+//                            continueInputZeroWidthSpace = false;
+//
+//                            // delete [Z] and \n
+//                            editable.delete(lastIndex - 1, length);
+//
+//                            // update bullet
+//                            if (editor.isBulletSpanSelected()) {
+//                                editor.ignoreTextChanges();
+//                                onEffectSelected(Effects.BULLET, false);
+//                                editor.registerTextChanges();
+//                                for (RTToolbar toolbar : mToolbars.values()) {
+//                                    toolbar.setBullet(false);
+//                                }
+//                            }
+//
+//                            // update number
+//                            if (editor.isNumberSpanSelected()) {
+//                                editor.ignoreTextChanges();
+//                                onEffectSelected(Effects.NUMBER, false);
+//                                editor.registerTextChanges();
+//                                for (RTToolbar toolbar : mToolbars.values()) {
+//                                    toolbar.setNumber(false);
+//                                }
+//                            }
+//                        }
+//                    }
+//
+//                    if (continueInputZeroWidthSpace) {
+//                        // append zero width character
+//                        editable.append("\u200B");
+//                    }
+//                }
+//            }
+//        }
+
         String theText = s.toString();
         String newText = mNewText == null ? "" : mNewText;
         if (mListener != null && !mIgnoreTextChanges && !newText.equals(theText)) {
             Spannable newSpannable = cloneSpannable();
-            mListener.onTextChanged(this, mOldSpannable, newSpannable, mSelStartBefore, mSelEndBefore, getSelectionStart(), getSelectionEnd());
+            int selStartAfter = getSelectionStart();
+            int selEndAfter = getSelectionEnd();
+            mListener.onTextChanged(this, mOldSpannable, newSpannable, mSelStartBefore, mSelEndBefore, selStartAfter, selEndAfter);
             mNewText = theText;
         }
         mLayoutChanged = true;
@@ -458,10 +520,12 @@ public class RTEditText extends androidx.appcompat.widget.AppCompatEditText impl
     @Override
     /* SpanWatcher */
     public void onSpanAdded(Spannable text, Object what, int start, int end) {
+        Log.d(TAG, "onSpanAdded: text: \"" + text + "\" count: " + text.length() + " what: " + what + " start: " + start + " end: " + end);
         mTextChanged = true;
         // we need to keep track of ordered list spans
         if (what instanceof BulletSpan) {
             mIsBulletSpanSelected = true;
+            Log.i(TAG, "mIsBulletSpanSelected: " + mIsBulletSpanSelected);
             // if text was empty then append zero width char
             // in order for the bullet to be shown when the span is selected
             if (text.toString().isEmpty()) {
@@ -469,6 +533,7 @@ public class RTEditText extends androidx.appcompat.widget.AppCompatEditText impl
             }
         } else if (what instanceof NumberSpan) {
             mIsNumberSpanSelected = true;
+            Log.i(TAG, "mIsNumberSpanSelected: " + mIsNumberSpanSelected);
             // if text was empty then append zero width char
             // in order for the number to be shown when the span is selected
             if (text.toString().isEmpty()) {
@@ -484,6 +549,7 @@ public class RTEditText extends androidx.appcompat.widget.AppCompatEditText impl
     @Override
     /* SpanWatcher */
     public void onSpanChanged(Spannable text, Object what, int ostart, int oend, int nstart, int nend) {
+        Log.d(TAG, "onSpanChanged: text: \"" + text + "\" count: " + text.length() + " what: " + what.getClass().getName() + " ostart: " + ostart + " oend: " + oend + " nstart: " + nstart + " nend: " + nend);
         mTextChanged = true;
         if (what instanceof RTSpan && what instanceof ParagraphStyle) {
             setParagraphsAreUp2Date(false);
@@ -493,12 +559,15 @@ public class RTEditText extends androidx.appcompat.widget.AppCompatEditText impl
     @Override
     /* SpanWatcher */
     public void onSpanRemoved(Spannable text, Object what, int start, int end) {
+        Log.d(TAG, "onSpanRemoved: text: \"" + text + "\" count: " + text.length() + " what: " + what.getClass().getName() + " start: " + start + " end: " + end);
         mTextChanged = true;
         // we need to keep track of ordered list spans
         if (what instanceof BulletSpan) {
             mIsBulletSpanSelected = false;
+            Log.i(TAG, "mIsBulletSpanSelected: " + mIsBulletSpanSelected);
         } else if (what instanceof NumberSpan) {
             mIsNumberSpanSelected = false;
+            Log.i(TAG, "mIsNumberSpanSelected: " + mIsNumberSpanSelected);
         }
 
         if (what instanceof RTSpan && what instanceof ParagraphStyle) {
@@ -510,10 +579,10 @@ public class RTEditText extends androidx.appcompat.widget.AppCompatEditText impl
      * Add a SpanWatcher for the Changeable implementation
      */
     private void addSpanWatcher() {
-        Spannable spannable = getText();
-        if (spannable.getSpans(0, spannable.length(), getClass()) != null) {
-            spannable.setSpan(this, 0, spannable.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
-        }
+//        Spannable spannable = getText();
+//        if (spannable.getSpans(0, spannable.length(), getClass()) != null) {
+//            spannable.setSpan(this, 0, spannable.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+//        }
     }
 
     synchronized private void setParagraphsAreUp2Date(boolean value) {
@@ -617,6 +686,7 @@ public class RTEditText extends androidx.appcompat.widget.AppCompatEditText impl
 
     @Override
     protected void onSelectionChanged(int start, int end) {
+        Log.d(TAG, "onSelectionChanged start: " + start + " end: " + end);
         if (mOldSelStart != start || mOldSelEnd != end) {
             mOldSelStart = start;
             mOldSelEnd = end;
@@ -650,6 +720,7 @@ public class RTEditText extends androidx.appcompat.widget.AppCompatEditText impl
      * The value for most effects is a Boolean, indicating whether to add or remove the effect.
      */
     public <V extends Object, C extends RTSpan<V>> void applyEffect(Effect<V, C> effect, V value) {
+        Log.w(TAG, "applyEffect effect: " + effect.getClass().getName() + " value: " + value);
         if (mUseRTFormatting && !mIsSelectionChanging && !mIsSaving) {
             Spannable oldSpannable = mIgnoreTextChanges ? null : cloneSpannable();
 

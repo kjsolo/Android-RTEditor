@@ -24,6 +24,7 @@ import android.text.Layout;
 import android.text.Layout.Alignment;
 import android.text.Spannable;
 import android.text.Spanned;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
@@ -675,6 +676,7 @@ public class RTManager implements RTToolbarListener, RTEditTextListener {
     /* @inheritDoc */
     public void onTextChanged(RTEditText editor, Spannable before, Spannable after,
                               int selStartBefore, int selEndBefore, int selStartAfter, int selEndAfter) {
+        Log.d("RTManager", "onTextChanged: " + after.toString());
         TextChangeOperation op = new TextChangeOperation(before, after,
                 selStartBefore, selEndBefore,
                 selStartAfter, selEndAfter);
