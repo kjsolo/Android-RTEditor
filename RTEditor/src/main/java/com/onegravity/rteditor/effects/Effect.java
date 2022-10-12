@@ -53,7 +53,7 @@ abstract public class Effect<V, C extends RTSpan<V>> {
         Selection selection = getSelection(editor);
         List<RTSpan<V>> spans = getSpans(editor.getText(), selection, SpanCollectMode.SPAN_FLAGS);
 
-        return ! spans.isEmpty();
+        return !spans.isEmpty();
     }
 
     /**
@@ -67,7 +67,7 @@ abstract public class Effect<V, C extends RTSpan<V>> {
         Selection selection = getSelection(editor);
         List<RTSpan<V>> spans = getSpans(editor.getText(), selection, SpanCollectMode.SPAN_FLAGS);
         for (RTSpan<V> span : spans) {
-            result.add( span.getValue() );
+            result.add(span.getValue());
         }
 
         return result;

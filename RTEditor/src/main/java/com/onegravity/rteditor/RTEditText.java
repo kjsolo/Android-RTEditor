@@ -23,12 +23,10 @@ import android.os.Parcelable;
 import android.text.Editable;
 import android.text.SpanWatcher;
 import android.text.Spannable;
-import android.text.Spanned;
 import android.text.TextWatcher;
 import android.text.style.ParagraphStyle;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.widget.EditText;
 import android.widget.TextView;
 
 import com.onegravity.rteditor.api.RTMediaFactory;
@@ -55,7 +53,6 @@ import com.onegravity.rteditor.utils.Selection;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -453,62 +450,13 @@ public class RTEditText extends androidx.appcompat.widget.AppCompatEditText impl
 //            }
 //        }
 
-//        RTEditText editor = this;
-//        if (editor.isBulletSpanSelected() || editor.isNumberSpanSelected()) {
-//            Editable editable = editor.getText();
-//            Objects.requireNonNull(editable);
-//            int length = editable.length();
-//            if (length > 0) {
-//                int lastIndex = length - 1;
-//                boolean isInput = endChangedPos > startChangedPos;
-//                boolean isNewLine = editable.charAt(lastIndex) == '\n';
-//                if (isInput && isNewLine) {
-//                    boolean continueInputZeroWidthSpace = true;
-//                    if (length >= 2) {
-//                        boolean isEmptyPrevious = editable.charAt(lastIndex - 1) == '\u200B';
-//                        if (isEmptyPrevious) {
-//                            continueInputZeroWidthSpace = false;
-//
-//                            // delete [Z] and \n
-//                            editable.delete(lastIndex - 1, length);
-//
-//                            // update bullet
-//                            if (editor.isBulletSpanSelected()) {
-//                                editor.ignoreTextChanges();
-//                                onEffectSelected(Effects.BULLET, false);
-//                                editor.registerTextChanges();
-//                                for (RTToolbar toolbar : mToolbars.values()) {
-//                                    toolbar.setBullet(false);
-//                                }
-//                            }
-//
-//                            // update number
-//                            if (editor.isNumberSpanSelected()) {
-//                                editor.ignoreTextChanges();
-//                                onEffectSelected(Effects.NUMBER, false);
-//                                editor.registerTextChanges();
-//                                for (RTToolbar toolbar : mToolbars.values()) {
-//                                    toolbar.setNumber(false);
-//                                }
-//                            }
-//                        }
-//                    }
-//
-//                    if (continueInputZeroWidthSpace) {
-//                        // append zero width character
-//                        editable.append("\u200B");
-//                    }
-//                }
-//            }
-//        }
-
         String theText = s.toString();
         String newText = mNewText == null ? "" : mNewText;
         if (mListener != null && !mIgnoreTextChanges && !newText.equals(theText)) {
             Spannable newSpannable = cloneSpannable();
             int selStartAfter = getSelectionStart();
             int selEndAfter = getSelectionEnd();
-            mListener.onTextChanged(this, mOldSpannable, newSpannable, mSelStartBefore, mSelEndBefore, selStartAfter, selEndAfter);
+            mListener.onTextChanged(this, mOldSpannable, newSpannable, startChangedPos, endChangedPos, mSelStartBefore, mSelEndBefore, selStartAfter, selEndAfter);
             mNewText = theText;
         }
         mLayoutChanged = true;
@@ -729,7 +677,7 @@ public class RTEditText extends androidx.appcompat.widget.AppCompatEditText impl
             synchronized (this) {
                 if (mListener != null && !mIgnoreTextChanges) {
                     Spannable newSpannable = cloneSpannable();
-                    mListener.onTextChanged(this, oldSpannable, newSpannable, getSelectionStart(), getSelectionEnd(),
+                    mListener.onTextChanged(this, oldSpannable, newSpannable, getSelectionStart(), getSelectionEnd(), getSelectionStart(), getSelectionEnd(),
                                             getSelectionStart(), getSelectionEnd());
                 }
                 mLayoutChanged = true;

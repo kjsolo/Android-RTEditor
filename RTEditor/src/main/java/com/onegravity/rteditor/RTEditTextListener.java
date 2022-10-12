@@ -48,7 +48,7 @@ public interface RTEditTextListener {
      * Text and or text effects have changed (used for undo/redo function).
      */
     void onTextChanged(RTEditText editor, Spannable before, Spannable after,
-                       int selStartBefore, int selEndBefore, int selStartAfter, int selEndAfter);
+                       int startChangedPos, int endChangedPos, int selStartBefore, int selEndBefore, int selStartAfter, int selEndAfter);
 
     /**
      * A link in a LinkSpan has been clicked.
