@@ -43,4 +43,8 @@ public abstract class Constants {
 
     public final static int CROP_IMAGE = 107;
 
+    public final static String ZERO_WIDTH_SPACE_STR = "\u200B";
+    public final static char ZERO_WIDTH_SPACE_CHAR = '\u200B';
+    public final static char CHAR_NEW_LINE = '\n';
+
 }

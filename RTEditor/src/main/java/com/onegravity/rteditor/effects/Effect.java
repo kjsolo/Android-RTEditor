@@ -42,6 +42,11 @@ abstract public class Effect<V, C extends RTSpan<V>> {
 
     private SpanCollector<V> mSpanCollector;
 
+    final public List<RTSpan<V>> spansInSelection(RTEditText editor) {
+        Selection selection = getSelection(editor);
+        return getSpans(editor.getText(), selection, SpanCollectMode.SPAN_FLAGS);
+    }
+
     /**
      * Check whether the effect exists in the currently selected text of the active RTEditText.
      *

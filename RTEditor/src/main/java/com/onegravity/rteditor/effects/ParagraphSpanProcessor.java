@@ -63,7 +63,7 @@ class ParagraphSpanProcessor<V extends Object> {
     }
 
     void addSpan(RTParagraphSpan<V> span, Paragraph paragraph) {
-        mParagraphSpans.add( new ParagraphSpan<V>(span, paragraph, false) );
+        mParagraphSpans.add(new ParagraphSpan<V>(span, paragraph, false));
     }
 
     void process(Spannable str) {
@@ -73,7 +73,7 @@ class ParagraphSpanProcessor<V extends Object> {
 
             if (paragraphSpan.mRemove) {
                 int spanStart = str.getSpanStart(span);
-                if (spanStart > -1  && spanStart < paraStart) {
+                if (spanStart > -1 && spanStart < paraStart) {
                     // process preceding spans
                     str.setSpan(span.createClone(), spanStart, paraStart, Spanned.SPAN_EXCLUSIVE_INCLUSIVE);
                 }

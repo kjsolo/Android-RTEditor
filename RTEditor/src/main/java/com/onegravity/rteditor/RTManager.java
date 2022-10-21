@@ -72,7 +72,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -679,56 +678,10 @@ public class RTManager implements RTToolbarListener, RTEditTextListener {
                               int startChangedPos, int endChangedPos, int selStartBefore, int selEndBefore, int selStartAfter, int selEndAfter) {
         Log.d("RTManager", "onTextChanged: " + after.toString());
 
-        boolean isBulletSpanSelected = Effects.BULLET.existsInSelection(editor);
-        boolean isNumberSpanSelected = Effects.NUMBER.existsInSelection(editor);
-
-        if (isBulletSpanSelected || isNumberSpanSelected) {
-            Editable editable = editor.getText();
-            Objects.requireNonNull(editable);
-            int length = editable.length();
-            if (length > 0) {
-                int lastIndex = length - 1;
-                boolean isInput = endChangedPos > startChangedPos;
-                boolean isNewLine = editable.charAt(lastIndex) == '\n';
-                if (isInput && isNewLine) {
-                    boolean continueInputZeroWidthSpace = true;
-                    if (length >= 2) {
-                        boolean isEmptyPrevious = editable.charAt(lastIndex - 1) == '\u200B';
-                        if (isEmptyPrevious) {
-                            continueInputZeroWidthSpace = false;
-
-                            // delete [Z] and \n
-                            editable.delete(lastIndex - 1, length);
-
-                            // update bullet
-                            if (isBulletSpanSelected) {
-                                editor.ignoreTextChanges();
-                                onEffectSelected(Effects.BULLET, false);
-                                editor.registerTextChanges();
-                                for (RTToolbar toolbar : mToolbars.values()) {
-                                    toolbar.setBullet(false);
-                                }
-                            }
-
-                            // update number
-                            if (isNumberSpanSelected) {
-                                editor.ignoreTextChanges();
-                                onEffectSelected(Effects.NUMBER, false);
-                                editor.registerTextChanges();
-                                for (RTToolbar toolbar : mToolbars.values()) {
-                                    toolbar.setNumber(false);
-                                }
-                            }
-                        }
-                    }
-
-                    if (continueInputZeroWidthSpace) {
-                        // append zero width character
-                        editable.append("\u200B");
-                    }
-                }
-            }
-        }
+        RTManagerExtendsKt.onTextChanged(editor, mToolbars,
+                startChangedPos, endChangedPos,
+                selStartBefore, selEndBefore,
+                selStartAfter, selEndAfter);
 
         TextChangeOperation op = new TextChangeOperation(before, after,
                 selStartBefore, selEndBefore,

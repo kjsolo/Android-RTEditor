@@ -17,6 +17,7 @@
 package com.onegravity.rteditor.effects;
 
 import android.text.Spannable;
+import android.util.Log;
 
 import com.onegravity.rteditor.RTEditText;
 import com.onegravity.rteditor.spans.RTSpan;
@@ -52,6 +53,7 @@ abstract class ParagraphEffect<V, C extends RTSpan<V>> extends Effect<V, C> {
      */
     @Override
     public final void applyToSelection(RTEditText editor, V value) {
+        Log.w("ParagraphEffect", "applyToSelection: " + this.getClass().getSimpleName() + " value: " + value);
         Selection selection = getSelection(editor);
         applyToSelection(editor, selection, value);
         Effects.cleanupParagraphs(editor, this);

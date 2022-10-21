@@ -16,6 +16,7 @@
 
 package com.onegravity.rteditor.effects;
 
+import android.text.Editable;
 import android.text.Spannable;
 import android.util.SparseIntArray;
 
@@ -24,6 +25,7 @@ import com.onegravity.rteditor.spans.NumberSpan;
 import com.onegravity.rteditor.spans.RTSpan;
 import com.onegravity.rteditor.utils.Helper;
 import com.onegravity.rteditor.utils.Paragraph;
+import com.onegravity.rteditor.utils.RTHelperKt;
 import com.onegravity.rteditor.utils.Selection;
 
 import java.util.ArrayList;
@@ -63,7 +65,7 @@ public class NumberEffect extends ParagraphEffect<Boolean, NumberSpan> {
              */
             int currentIndentation = 0;
             List<RTSpan<Integer>> indentationSpans = Effects.INDENTATION.getSpans(str, paragraph, SpanCollectMode.EXACT);
-            if (! indentationSpans.isEmpty()) {
+            if (!indentationSpans.isEmpty()) {
                 for (RTSpan<Integer> span : indentationSpans) {
                     currentIndentation += span.getValue();
                 }
@@ -77,7 +79,7 @@ public class NumberEffect extends ParagraphEffect<Boolean, NumberSpan> {
             /*
              * If the paragraph is selected then we sure have a number
              */
-            boolean hasExistingSpans = ! existingSpans.isEmpty();
+            boolean hasExistingSpans = !existingSpans.isEmpty();
             boolean hasNumber = paragraph.isSelected(selectedParagraphs) ? enable : hasExistingSpans;
 
             /*
@@ -113,6 +115,15 @@ public class NumberEffect extends ParagraphEffect<Boolean, NumberSpan> {
 
         // add or remove spans
         mSpans2Process.process(str);
+
+        Editable editable = editor.getText();
+        if (editable != null && selectedParagraphs != null && enable != null) {
+            if (enable) {
+                RTHelperKt.insertZeroWidthChar(editable, selectedParagraphs.start());
+            } else {
+                RTHelperKt.removeZeroWidthChar(editable, selectedParagraphs.start());
+            }
+        }
     }
 
 }

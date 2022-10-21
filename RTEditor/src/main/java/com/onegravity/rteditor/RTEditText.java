@@ -113,8 +113,8 @@ public class RTEditText extends androidx.appcompat.widget.AppCompatEditText impl
     private String mNewText;            // new text after it changed (needed in afterTextChanged to see if the text has changed)
     private Spannable mOldSpannable;    // undo/redo
 
-    private int startChangedPos;               // onTextChanged start position
-    private int endChangedPos;                 // onTextChanged end position
+    private int mStartChangedPos;               // onTextChanged start position
+    private int mEndChangedPos;                 // onTextChanged end position
 
     // we need to keep track of the media for this editor to be able to clean up after we're done
     private Set<RTMedia> mOriginalMedia = new HashSet<RTMedia>();
@@ -434,8 +434,8 @@ public class RTEditText extends androidx.appcompat.widget.AppCompatEditText impl
     /* TextWatcher */
     public synchronized void onTextChanged(CharSequence s, int start, int before, int count) {
         mLayoutChanged = true;
-        startChangedPos = start;
-        endChangedPos = start + count;
+        mStartChangedPos = start;
+        mEndChangedPos = start + count;
     }
 
     @Override
@@ -456,7 +456,10 @@ public class RTEditText extends androidx.appcompat.widget.AppCompatEditText impl
             Spannable newSpannable = cloneSpannable();
             int selStartAfter = getSelectionStart();
             int selEndAfter = getSelectionEnd();
-            mListener.onTextChanged(this, mOldSpannable, newSpannable, startChangedPos, endChangedPos, mSelStartBefore, mSelEndBefore, selStartAfter, selEndAfter);
+            mListener.onTextChanged(this, mOldSpannable, newSpannable,
+                    mStartChangedPos, mEndChangedPos,
+                    mSelStartBefore, mSelEndBefore,
+                    selStartAfter, selEndAfter);
             mNewText = theText;
         }
         mLayoutChanged = true;
@@ -534,7 +537,7 @@ public class RTEditText extends androidx.appcompat.widget.AppCompatEditText impl
     }
 
     synchronized private void setParagraphsAreUp2Date(boolean value) {
-        if (! mIgnoreParagraphChanges) {
+        if (!mIgnoreParagraphChanges) {
             mParagraphsAreUp2Date = value;
         }
     }
@@ -668,17 +671,20 @@ public class RTEditText extends androidx.appcompat.widget.AppCompatEditText impl
      * The value for most effects is a Boolean, indicating whether to add or remove the effect.
      */
     public <V extends Object, C extends RTSpan<V>> void applyEffect(Effect<V, C> effect, V value) {
-        Log.w(TAG, "applyEffect effect: " + effect.getClass().getName() + " value: " + value);
+        Log.w(TAG, "applyEffect effect: " + effect.getClass().getSimpleName() + " value: " + value);
         if (mUseRTFormatting && !mIsSelectionChanging && !mIsSaving) {
             Spannable oldSpannable = mIgnoreTextChanges ? null : cloneSpannable();
+            getSelectionStart();
 
             effect.applyToSelection(this, value);
 
             synchronized (this) {
                 if (mListener != null && !mIgnoreTextChanges) {
                     Spannable newSpannable = cloneSpannable();
-                    mListener.onTextChanged(this, oldSpannable, newSpannable, getSelectionStart(), getSelectionEnd(), getSelectionStart(), getSelectionEnd(),
-                                            getSelectionStart(), getSelectionEnd());
+                    mListener.onTextChanged(this, oldSpannable, newSpannable,
+                            getSelectionStart(), getSelectionEnd(),
+                            getSelectionStart(), getSelectionEnd(),
+                            getSelectionStart(), getSelectionEnd());
                 }
                 mLayoutChanged = true;
             }
